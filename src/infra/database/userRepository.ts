@@ -1,16 +1,24 @@
+import { Client, Pool } from "pg";
 import { IUserRepository } from "../../application/repositories/userRepository";
-import { IUsuario } from "../../domain/model/usuario";
+import { Usuario } from "../../domain/model/usuario";
 
-class UserRepository implements IUserRepository {
-  dbConnection: any;
-  constructor(dbConnection: any) {
+class UserRepositoryDatabase implements IUserRepository {
+  dbConnection: Pool | Client;
+  constructor(dbConnection: Pool | Client) {
     this.dbConnection = dbConnection;
   }
-  createUser(payload: IUsuario) {
-    this.dbConnection.insertOne({ payload });
-    throw new Error("db error")
-    console.log(`nome: ${payload.nome}, email:  ${payload.email} saved`);
+  async createUser(payload: Usuario) {
+    try {
+      await this.dbConnection.query('BEGIN')
+      const queryText = 'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id'
+      const res = await this.dbConnection.query(queryText, [payload.nome, payload.email])
+      await this.dbConnection.query('COMMIT');
+      return res.rows[0].id
+    } catch (e) {
+      await this.dbConnection.query('ROLLBACK')
+      throw e
+    } 
   }
 }
 
-export { UserRepository };
+export { UserRepositoryDatabase };

@@ -1,6 +1,6 @@
-import { IUsuario } from "../../domain/model/usuario"
+import { IUsuario, Usuario } from "../../domain/model/usuario"
 
 export interface IUserRepository {
     dbConnection: any
-    createUser: (payload: IUsuario) => void
+    createUser: (payload: Usuario) => Promise<string>
 }
